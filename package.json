@@ -1,0 +1,16 @@
+{
+  "name": "apple-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "เฝ้าสต็อก Apple Store TH และพาไปหน้าชำระเงิน",
+  "dependencies": {
+    "dotenv": "^18.0.5",
+    "playwright": "^1.63.0"
+  }
+}

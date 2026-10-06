@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "firstName": "Somchai",
+    "lastName": "Jaidee",
+    "email": "somchai.j01@gmail.com",
+    "phone": "0812345678",
+    "usedCount": 0
+  },
+  {
+    "id": 2,
+    "firstName": "Somsri",
+    "lastName": "Rukdee",
+    "email": "somsri.r02@gmail.com",
+    "phone": "0898765432",
+    "usedCount": 0
+  },
+  {
+    "id": 3,
+    "firstName": "Anan",
+    "lastName": "Sombat",
+    "email": "anan.s03@gmail.com",
+    "phone": "0861112233",
+    "usedCount": 0
+  }
+]

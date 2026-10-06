@@ -1,0 +1,28 @@
+{
+  "partNumber": "MJXQ4ZP/A",
+  "quantity": 2,
+  "maxOrderTotal": 105800,
+  "autoPlaceOrder": true,
+  "location": "10330",
+  "pickupPostalCode": "11000",
+  "pickupSlotIndex": 3,
+  "storeNumbers": [],
+  "checkIntervalMs": 30000,
+  "jitterMs": 30000,
+  "errorBackoffMs": 60000,
+  "maxBackoffMs": 900000,
+  "browser": "chromium",
+  "browserChannel": "chrome",
+  "stealthMode": true,
+  "slowMoMs": 0,
+  "stepDelayMs": [
+    300,
+    700
+  ],
+  "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+  "options": {
+    "dimensionScreensize": "6_9inch",
+    "dimensionColor": "burgundy",
+    "dimensionCapacity": "256gb"
+  }
+}
