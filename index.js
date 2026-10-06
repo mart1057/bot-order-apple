@@ -429,6 +429,7 @@ async function runCheckout() {
   const type = settings.browser || 'chromium';
   const context = await playwright[type].launchPersistentContext(path.join(__dirname, '.apple-browser'), {
     headless: false,
+    timeout: 30000,
     channel: type === 'chromium' ? settings.browserChannel || undefined : undefined,
     slowMo: settings.slowMoMs ?? 0,
     args: type === 'chromium' ? [
@@ -440,6 +441,7 @@ async function runCheckout() {
     // เว้นว่างเพื่อใช้ User-Agent จริงของเบราว์เซอร์ที่เปิด
     ...(settings.userAgent ? { userAgent: settings.userAgent } : {}),
   });
+  console.log('✅ เชื่อมต่อเบราว์เซอร์แล้ว');
   if (type === 'chromium' && settings.stealthMode) {
     await context.addInitScript(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
@@ -447,8 +449,13 @@ async function runCheckout() {
   }
   // Persistent context มีแท็บเริ่มต้นอยู่แล้ว ใช้แท็บนั้นเพื่อไม่ทิ้ง about:blank ไว้
   const page = context.pages()[0] || await context.newPage();
-  await page.bringToFront();
   page.setDefaultTimeout(20000);
+  page.setDefaultNavigationTimeout(30000);
+  page.on('requestfailed', (request) => {
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+      console.warn(`[navigation] โหลดหน้าไม่สำเร็จ: ${request.failure()?.errorText || 'unknown error'}`);
+    }
+  });
   page.on('response', (response) => {
     const request = response.request();
     if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
@@ -460,6 +467,7 @@ async function runCheckout() {
   try {
     console.log('🌐 กำลังเปิดหน้า Apple หลัก...');
     await page.goto('https://www.apple.com/th/', { waitUntil: 'domcontentloaded' });
+    await page.bringToFront();
     await assertNotBlocked(page, 'เปิดหน้า Apple หลัก');
     await page.waitForTimeout(1000 + Math.random() * 1000);
 
