@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "checkout:3": "node index.js --checkout-only",
+    "open:3": "node open-three.js"
   },
   "keywords": [],
   "author": "",

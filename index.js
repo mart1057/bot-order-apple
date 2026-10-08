@@ -1,8 +1,8 @@
 require('dotenv').config();
 const { execFile } = require('child_process');
 const playwright = require('playwright');
-const path = require('path');
 const settings = require('./settings.json');
+const createBrowserSession = require('./browser-session');
 
 const REQUIRED_ENV = ['FIRST_NAME', 'LAST_NAME', 'EMAIL', 'PHONE'];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -263,7 +263,7 @@ async function selectByLabel(page, label, value) {
 
 // หน้าถุง: ทำให้จำนวนรวมในถุงเท่ากับ settings.quantity
 // Apple แยก iPhone เป็นบรรทัดละ 1 เครื่อง (เลือก 2 แล้วจะกลายเป็น 2 บรรทัด) จึงนับรวมทุกบรรทัด
-// และถุงถูกเก็บไว้ข้ามรอบใน .apple-browser จึงอาจมีของค้างจากรอบก่อน
+// ตรวจจำนวนรวมทุกบรรทัดในถุงของเซสชันนี้
 const QTY_SELECTOR = 'select[name*="quantity" i], select[data-autom*="quantity" i], select[aria-label*="จำนวน"]';
 
 async function bagTotal(page) {
@@ -423,11 +423,13 @@ async function searchPickupStores(page, postalCode) {
 
 const field = (name) => [`input[name$=".${name}"]`, `input[name="${name}"]`, `input[id$="${name}"]`];
 
-async function runCheckout() {
-  console.log('🚀 เปิดเบราว์เซอร์เพื่อทำรายการ...');
+async function runCheckout(instance = 1) {
+  console.log(`🚀 เปิดเบราว์เซอร์ ${instance} เพื่อทำรายการ...`);
   // browser: "chromium" (ใช้ Chrome ในเครื่องผ่าน browserChannel) หรือ "webkit" (engine เดียวกับ Safari)
   const type = settings.browser || 'chromium';
-  const context = await playwright[type].launchPersistentContext(path.join(__dirname, '.apple-browser'), {
+  const sessionDirectory = createBrowserSession(instance);
+  console.log(`🪟 เบราว์เซอร์ ${instance}: โปรไฟล์ใหม่ ${sessionDirectory}`);
+  const context = await playwright[type].launchPersistentContext(sessionDirectory, {
     headless: false,
     timeout: 30000,
     channel: type === 'chromium' ? settings.browserChannel || undefined : undefined,
@@ -441,7 +443,7 @@ async function runCheckout() {
     // เว้นว่างเพื่อใช้ User-Agent จริงของเบราว์เซอร์ที่เปิด
     ...(settings.userAgent ? { userAgent: settings.userAgent } : {}),
   });
-  console.log('✅ เชื่อมต่อเบราว์เซอร์แล้ว');
+  console.log(`✅ เชื่อมต่อเบราว์เซอร์ ${instance} แล้ว`);
   if (type === 'chromium' && settings.stealthMode) {
     await context.addInitScript(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
@@ -640,7 +642,7 @@ async function runCheckout() {
       throw new Error(`ยอด ฿${total.toLocaleString()} เกินที่ตั้งไว้ ฿${settings.maxOrderTotal.toLocaleString()} (จำนวนในถุงอาจเกิน) ไม่กดส่งคำสั่งซื้อ`);
     }
 
-    if (settings.autoPlaceOrder) {
+    if (settings.autoPlaceOrder && process.argv.includes('--single')) {
       await pause(page);
       await placeOrder.click();
       notify(`กด "ส่งคำสั่งซื้อ" แล้ว (฿${total.toLocaleString()}) — ยืนยันใน popup เอง`);
@@ -654,6 +656,17 @@ async function runCheckout() {
   // ไม่ปิดเบราว์เซอร์ บอทจะไม่กดสั่งซื้อให้ ต้องยืนยันเอง
   console.log('เบราว์เซอร์จะเปิดค้างไว้ กด Ctrl+C เมื่อทำรายการเสร็จ');
   await new Promise(() => {});
+}
+
+async function runCheckouts() {
+  const count = process.argv.includes('--single') ? 1 : 3;
+  console.log(`🪟 เริ่มบอต ${count} หน้าต่าง แยกเซสชันกัน`);
+  await Promise.all(Array.from({ length: count }, (_, index) =>
+    runCheckout(index + 1).catch((err) => {
+      console.error(`❌ เบราว์เซอร์ ${index + 1}: ${err.message}`);
+      process.exitCode = 1;
+    }),
+  ));
 }
 
 async function main() {
@@ -672,7 +685,7 @@ async function main() {
       consecutiveFailures = 0;
       if (stores.length) {
         notify(`มีของแล้ว: ${stores.join(', ')}`);
-        return runCheckout();
+        return runCheckouts();
       }
       console.log(`[${now()}] ยังไม่มีของ`);
     } catch (err) {
@@ -691,7 +704,7 @@ async function main() {
 }
 
 if (process.argv.includes('--checkout-only')) {
-  runCheckout().catch((err) => { console.error(err.message); process.exitCode = 1; });
+  runCheckouts().catch((err) => { console.error(err.message); process.exitCode = 1; });
 } else {
   main().catch((err) => { console.error(err.message); process.exitCode = 1; });
 }
