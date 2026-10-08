@@ -655,7 +655,7 @@ async function runCheckout(instance = 1) {
       throw new Error(`ยอด ฿${total.toLocaleString()} เกินที่ตั้งไว้ ฿${settings.maxOrderTotal.toLocaleString()} (จำนวนในถุงอาจเกิน) ไม่กดส่งคำสั่งซื้อ`);
     }
 
-    if (settings.autoPlaceOrder && process.argv.includes('--single')) {
+    if (settings.autoPlaceOrder) {
       await pause(page);
       await placeOrder.click();
       notify(`กด "ส่งคำสั่งซื้อ" แล้ว (฿${total.toLocaleString()}) — ยืนยันใน popup เอง`);
