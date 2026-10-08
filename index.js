@@ -1,8 +1,20 @@
 require('dotenv').config();
 const { execFile } = require('child_process');
 const playwright = require('playwright');
-const settings = require('./settings.json');
+const config = require('./settings.json');
 const createBrowserSession = require('./browser-session');
+
+// เลือกสินค้าจาก settings.products ตาม settings.selectedProduct
+const product = config.products?.[config.selectedProduct];
+if (!product) {
+  throw new Error(`ไม่พบสินค้า "${config.selectedProduct}" ใน settings.json (ที่มี: ${Object.keys(config.products || {}).join(', ')})`);
+}
+if (!product.partNumber) {
+  throw new Error(`สินค้า "${config.selectedProduct}" ยังไม่มี partNumber ใน settings.json กรุณาเติมก่อนรัน`);
+}
+const { products, selectedProduct, ...shared } = config;
+const settings = { ...shared, partNumber: product.partNumber, productUrl: product.productUrl, options: product.options || {} };
+console.log(`🛒 สินค้าที่เลือก: ${product.name || selectedProduct} (${settings.partNumber})`);
 
 const REQUIRED_ENV = ['FIRST_NAME', 'LAST_NAME', 'EMAIL', 'PHONE'];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -480,6 +492,7 @@ async function runCheckout(instance = 1) {
     // เลือกขนาด/สี/ความจุ (กรณีใช้ URL หน้าเลือกรุ่นที่ยังไม่ได้เลือกอะไร) แล้วเลือก "ไม่มีการคุ้มครอง AppleCare+"
     // ปุ่มใส่ถุงจะ disabled จนกว่าจะเลือกครบ
     for (const [name, value] of Object.entries(settings.options || {})) {
+      if (!value) continue; // ค่าว่าง = ไม่ต้องเลือก (ใช้ค่าเริ่มต้นของ Apple)
       await selectRadio(page, page.locator(`input[name="${name}"][value="${value}"]`), `${name}=${value}`);
     }
     const noAppleCare = page.locator('input[data-autom="noapplecare"]');
@@ -659,7 +672,7 @@ async function runCheckout(instance = 1) {
 }
 
 async function runCheckouts() {
-  const count = process.argv.includes('--single') ? 1 : 3;
+  const count = 1;
   console.log(`🪟 เริ่มบอต ${count} หน้าต่าง แยกเซสชันกัน`);
   await Promise.all(Array.from({ length: count }, (_, index) =>
     runCheckout(index + 1).catch((err) => {

@@ -4,7 +4,7 @@ const createBrowserSession = require('./browser-session');
 const contexts = [];
 
 async function main() {
-  const results = await Promise.allSettled([1, 2, 3].map(async (number) => {
+  const results = await Promise.allSettled([1].map(async (number) => {
     const type = settings.browser || 'chromium';
     const sessionDirectory = createBrowserSession(number);
     console.log(`หน้าต่าง ${number}: โปรไฟล์ใหม่ ${sessionDirectory}`);
@@ -20,7 +20,8 @@ async function main() {
     contexts.push(context);
     console.log(`เปิดเบราว์เซอร์ ${number} แล้ว`);
     const page = context.pages()[0] || await context.newPage();
-    await page.goto(settings.productUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    const productUrl = settings.products?.[settings.selectedProduct]?.productUrl || settings.productUrl;
+    await page.goto(productUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
     console.log(`หน้าต่าง ${number}: เปิดหน้าสินค้าแล้ว (ยังไม่ checkout)`);
   }));
   for (let index = 0; index < results.length; index++) {

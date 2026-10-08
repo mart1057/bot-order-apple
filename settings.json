@@ -1,7 +1,38 @@
 {
-  "partNumber": "MJXQ4ZP/A",
+  "_comment": "เลือกรุ่นที่จะสั่งได้ที่ selectedProduct (ใช้ได้ 1 ค่า ต่อการรัน 1 ครั้ง): iphone-18-pro | iphone-18-pro-max | iphone-duo",
+  "selectedProduct": "iphone-18-pro",
+  "products": {
+    "iphone-18-pro": {
+      "name": "iPhone 18 Pro 6.3 นิ้ว 256GB Burgundy",
+      "partNumber": "MJRR4ZP/A",
+      "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "options": {
+        "dimensionScreensize": "6_3inch",
+        "dimensionColor": "burgundy",
+        "dimensionCapacity": "256gb"
+      }
+    },
+    "iphone-18-pro-max": {
+      "name": "iPhone 18 Pro Max 6.9 นิ้ว 256GB Burgundy",
+      "partNumber": "MJXQ4ZP/A",
+      "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "options": {
+        "dimensionScreensize": "6_9inch",
+        "dimensionColor": "burgundy",
+        "dimensionCapacity": "256gb"
+      }
+    },
+    "iphone-duo": {
+      "name": "iPhone Duo 256GB Star White",
+      "partNumber": "MK2D4ZP/A",
+      "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-duo",
+      "options": {
+        "dimensionColor": "starwhite",
+        "dimensionCapacity": "256gb"
+      }
+    }
+  },
   "quantity": 2,
-  "maxOrderTotal": 105800,
   "autoPlaceOrder": true,
   "location": "10330",
   "pickupPostalCode": "11000",
@@ -18,11 +49,5 @@
   "stepDelayMs": [
     300,
     700
-  ],
-  "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
-  "options": {
-    "dimensionScreensize": "6_9inch",
-    "dimensionColor": "burgundy",
-    "dimensionCapacity": "256gb"
-  }
+  ]
 }
