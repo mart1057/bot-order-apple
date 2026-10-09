@@ -1,36 +1,5 @@
 {
-  "_comment": {
-    "วิธีใช้": "ก็อป key ด้านล่างไปวางใน selectedProduct (รูปแบบ <รุ่น>-<ความจุ>-<สี>)",
-    "iPhone Duo": [
-      "iphone-duo-256gb-starwhite",
-      "iphone-duo-256gb-nightsky",
-      "iphone-duo-512gb-starwhite",
-      "iphone-duo-512gb-nightsky",
-      "iphone-duo-1tb-starwhite",
-      "iphone-duo-1tb-nightsky",
-      "iphone-duo-2tb-starwhite",
-      "iphone-duo-2tb-nightsky"
-    ],
-    "iPhone 18 Pro Max": [
-      "iphone-18-pro-max-256gb-black",
-      "iphone-18-pro-max-256gb-silver",
-      "iphone-18-pro-max-256gb-burgundy",
-      "iphone-18-pro-max-256gb-glacier",
-      "iphone-18-pro-max-512gb-black",
-      "iphone-18-pro-max-512gb-silver",
-      "iphone-18-pro-max-512gb-burgundy",
-      "iphone-18-pro-max-512gb-glacier",
-      "iphone-18-pro-max-1tb-black",
-      "iphone-18-pro-max-1tb-silver",
-      "iphone-18-pro-max-1tb-burgundy",
-      "iphone-18-pro-max-1tb-glacier",
-      "iphone-18-pro-max-2tb-black",
-      "iphone-18-pro-max-2tb-silver",
-      "iphone-18-pro-max-2tb-burgundy",
-      "iphone-18-pro-max-2tb-glacier"
-    ]
-  },
-  "selectedProduct": "iphone-18-pro-max-256gb-glacier",
+  "_comment": "คัดลอก key ที่ต้องการไปใส่ selectedProduct และ copy object ไปไว้ใน settings.json > products (ข้อมูลจาก apple.com/th 2026-10-09)",
   "products": {
     "iphone-duo-256gb-starwhite": {
       "name": "iPhone Duo 256GB Star White",
@@ -504,24 +473,5 @@
         "dimensionCapacity": "2tb"
       }
     }
-  },
-  "quantity": 2,
-  "autoPlaceOrder": true,
-  "location": "10330",
-  "pickupPostalCode": "11000",
-  "pickupSlotIndex": 3,
-  "storeNumbers": [],
-  "checkIntervalMs": 30000,
-  "jitterMs": 30000,
-  "errorBackoffMs": 60000,
-  "maxBackoffMs": 900000,
-  "browser": "chromium",
-  "fallbackBrowser": "firefox",
-  "browserChannel": "chrome",
-  "stealthMode": true,
-  "slowMoMs": 0,
-  "stepDelayMs": [
-    300,
-    700
-  ]
+  }
 }

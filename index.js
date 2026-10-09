@@ -3,6 +3,7 @@ const { execFile } = require('child_process');
 const playwright = require('playwright');
 const config = require('./settings.json');
 const createBrowserSession = require('./browser-session');
+const diagnoseBag = process.argv.includes('--diagnose-bag');
 
 // เลือกสินค้าจาก settings.products ตาม settings.selectedProduct
 const product = config.products?.[config.selectedProduct];
@@ -465,13 +466,26 @@ async function runCheckout(instance = 1) {
   const page = context.pages()[0] || await context.newPage();
   page.setDefaultTimeout(20000);
   page.setDefaultNavigationTimeout(30000);
+  let checkoutStep = 'เริ่มต้น';
+  let lastRejectedResponse;
+  const requestPath = (request) => {
+    const url = new URL(request.url());
+    return `${url.origin}${url.pathname}`;
+  };
   page.on('requestfailed', (request) => {
-    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
-      console.warn(`[navigation] โหลดหน้าไม่สำเร็จ: ${request.failure()?.errorText || 'unknown error'}`);
+    if (request.isNavigationRequest() || /\/shop\//.test(new URL(request.url()).pathname)) {
+      console.warn(`[request][${instance}][${checkoutStep}] ${request.method()} ${requestPath(request)} โหลดไม่สำเร็จ: ${request.failure()?.errorText || 'unknown error'}`);
     }
   });
   page.on('response', (response) => {
     const request = response.request();
+    const status = response.status();
+    if ([403, 429, 541].includes(status)) {
+      lastRejectedResponse = { status, step: checkoutStep, method: request.method(), path: requestPath(request) };
+      console.warn(`[rejected][${instance}][${checkoutStep}] HTTP ${status} ${request.method()} ${requestPath(request)}`);
+    } else if (diagnoseBag && /\/shop\//.test(new URL(response.url()).pathname) && ['document', 'xhr', 'fetch'].includes(request.resourceType())) {
+      console.log(`[response][${instance}][${checkoutStep}] HTTP ${status} ${request.method()} ${requestPath(request)}`);
+    }
     if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
       const url = new URL(response.url());
       console.log(`[navigation] HTTP ${response.status()} ${url.origin}${url.pathname}`);
@@ -480,11 +494,13 @@ async function runCheckout(instance = 1) {
 
   try {
     console.log('🌐 กำลังเปิดหน้า Apple หลัก...');
+    checkoutStep = 'เปิดหน้า Apple หลัก';
     await page.goto('https://www.apple.com/th/', { waitUntil: 'domcontentloaded' });
     await page.bringToFront();
     await assertNotBlocked(page, 'เปิดหน้า Apple หลัก');
     await page.waitForTimeout(1000 + Math.random() * 1000);
 
+    checkoutStep = 'เปิดหน้าสินค้า';
     await page.goto(settings.productUrl, { waitUntil: 'domcontentloaded' });
     await assertNotBlocked(page, 'เปิดหน้าสินค้า');
     await pause(page);
@@ -503,6 +519,7 @@ async function runCheckout(instance = 1) {
       return button && !button.disabled;
     }, null, { timeout: 30000 });
     await pause(page);
+    checkoutStep = 'ใส่ลงถุง / attach';
     await addToBag.click();
     // หน้าหลังใส่ถุง (step=attach) มีปุ่ม "ดูสินค้าในถุง"
     const bagLink = page.locator('a[href*="/shop/bag"], button').filter({
@@ -514,6 +531,7 @@ async function runCheckout(instance = 1) {
       while (!new URL(page.url()).pathname.endsWith('/shop/bag')) {
         await assertNotBlocked(page, 'ใส่ลงในถุง');
         if (await bagLink.isVisible()) {
+          checkoutStep = 'เปิดหน้าถุง';
           await bagLink.click();
           await page.waitForURL((url) => url.pathname.endsWith('/shop/bag'), { timeout: 30000 });
           break;
@@ -528,6 +546,7 @@ async function runCheckout(instance = 1) {
       console.warn(`⚠️  หลังใส่ถุง: ${err.message}`);
       console.log('🛍️  กำลังเปิดหน้าถุงเพื่อตรวจผลการเพิ่มสินค้า...');
       try {
+        checkoutStep = 'ตรวจถุงหลังเกิดข้อผิดพลาด';
         await page.goto('https://www.apple.com/th/shop/bag', { waitUntil: 'domcontentloaded' });
         await assertNotBlocked(page, 'ตรวจถุงหลังเพิ่มสินค้าไม่สำเร็จ');
       } catch (bagError) {
@@ -535,6 +554,11 @@ async function runCheckout(instance = 1) {
       }
       throw new Error('เปิดหน้าถุงแล้ว กรุณาตรวจรุ่น สี ความจุ และจำนวน ก่อนทำรายการต่อด้วยตนเอง');
     }
+    if (diagnoseBag) {
+      console.log('🔎 ตรวจถึงหน้าถุงแล้ว หยุดก่อนปรับจำนวนและชำระเงิน');
+      await new Promise(() => {});
+    }
+    checkoutStep = 'ปรับจำนวน / checkout';
     await pause(page);
     await setBagQuantity(page, settings.quantity || 1);
     await pause(page);
@@ -663,6 +687,10 @@ async function runCheckout(instance = 1) {
       notify('ถึงหน้าตรวจทานคำสั่งซื้อแล้ว ตรวจข้อมูล แล้วกด "ส่งคำสั่งซื้อ" เอง');
     }
   } catch (err) {
+    if (lastRejectedResponse) {
+      const rejected = lastRejectedResponse;
+      console.warn(`🔎 คำขอที่ถูกปฏิเสธล่าสุด: HTTP ${rejected.status} ${rejected.method} ${rejected.path} (ช่วง ${rejected.step}) — อาจไม่ใช่สาเหตุของข้อผิดพลาดล่าสุด`);
+    }
     notify(`อัตโนมัติหยุดที่: ${err.message} — ทำต่อเองในเบราว์เซอร์ได้เลย`);
   }
 
@@ -716,7 +744,7 @@ async function main() {
   }
 }
 
-if (process.argv.includes('--checkout-only')) {
+if (process.argv.includes('--checkout-only') || diagnoseBag) {
   runCheckouts().catch((err) => { console.error(err.message); process.exitCode = 1; });
 } else {
   main().catch((err) => { console.error(err.message); process.exitCode = 1; });

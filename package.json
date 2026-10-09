@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "checkout": "node index.js --checkout-only",
+    "diagnose:bag": "node index.js --diagnose-bag",
     "open": "node open-three.js",
     "checkout:3": "node index.js --checkout-only",
     "open:3": "node open-three.js"
