@@ -14,7 +14,7 @@ if (!product.partNumber) {
   throw new Error(`สินค้า "${config.selectedProduct}" ยังไม่มี partNumber ใน settings.json กรุณาเติมก่อนรัน`);
 }
 const { products, selectedProduct, ...shared } = config;
-const settings = { ...shared, partNumber: product.partNumber, productUrl: product.productUrl, options: product.options || {} };
+const settings = { ...shared, partNumber: product.partNumber, productUrl: product.productUrl, landingPath: product.landingPath, options: product.options || {} };
 console.log(`🛒 สินค้าที่เลือก: ${product.name || selectedProduct} (${settings.partNumber})`);
 
 const REQUIRED_ENV = ['FIRST_NAME', 'LAST_NAME', 'EMAIL', 'PHONE'];
@@ -436,6 +436,62 @@ async function searchPickupStores(page, postalCode) {
 
 const field = (name) => [`input[name$=".${name}"]`, `input[name="${name}"]`, `input[id$="${name}"]`];
 
+// กดจากหน้าแรก: เมนู iPhone → ไอคอนรุ่น (landingPath) → ปุ่ม "ซื้อ" → หน้าเลือกรุ่น (productUrl)
+async function clickThroughToProduct(page, setStep) {
+  if (!settings.landingPath) throw new Error('สินค้านี้ไม่มี landingPath ใน settings.json');
+  const visibleLink = (selector) => page.locator(selector).locator('visible=true').first();
+  const buyPath = new URL(settings.productUrl).pathname.replace(/\/$/, '');
+
+  setStep('กดเมนู iPhone');
+  const iphoneNav = visibleLink('a[href$="/th/iphone/"]');
+  await iphoneNav.waitFor({ timeout: 15000 }).catch(() => { throw new Error('หาเมนู iPhone ไม่เจอ'); });
+  await iphoneNav.click();
+  await page.waitForURL((url) => url.pathname.endsWith('/th/iphone/'), { timeout: 30000 });
+  await assertNotBlocked(page, 'กดเมนู iPhone');
+  await pause(page);
+
+  setStep('กดไอคอนรุ่น');
+  const modelLink = visibleLink(`a[href$="${settings.landingPath}"]`);
+  await modelLink.waitFor({ timeout: 15000 }).catch(() => { throw new Error(`หาลิงก์ ${settings.landingPath} ไม่เจอ`); });
+  await modelLink.click();
+  await page.waitForURL((url) => url.pathname.startsWith(settings.landingPath), { timeout: 30000 });
+  await assertNotBlocked(page, 'กดไอคอนรุ่น');
+  await pause(page);
+
+  // ปุ่ม "ซื้อ" มีหลายตัวที่ลิงก์เดียวกัน บางตัวซ่อนอยู่ในแถบเมนูที่หุบนอกจอ (ยังนับว่า visible)
+  // จึงเลือกตัวที่อยู่ในจอจริง โดยเริ่มจากปุ่มใหญ่ใต้ภาพ (marquee-button) ถ้าไม่เจอให้เลื่อนลงทีละนิด
+  setStep('กดปุ่มซื้อ');
+  // ปุ่มซื้อในหน้าแนะนำไม่ได้ลิงก์ไป productUrl ตรง แต่ไป /shop/goto/buy_iphone/<slug ที่ใช้ _> แล้ว redirect ต่อ
+  const gotoPath = `/shop/goto/buy_iphone/${buyPath.split('/').pop().replace(/-/g, '_')}`;
+  const buyLinks = [
+    page.locator(`a.marquee-button[href$="${gotoPath}"]`),
+    page.locator(`a[href$="${gotoPath}"], a[href*="${buyPath}"]`),
+  ];
+  const inViewport = async (el) => {
+    const box = await el.boundingBox().catch(() => null);
+    const vp = page.viewportSize() || await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    return box && box.width > 0 && box.height > 0 && box.y >= 0 && (!vp.height || box.y + box.height <= vp.height);
+  };
+  const findBuyLink = async () => {
+    for (const group of buyLinks) {
+      for (const el of await group.all()) {
+        if (await el.isVisible().catch(() => false) && await inViewport(el)) return el;
+      }
+    }
+    return null;
+  };
+  const deadline = Date.now() + 20000;
+  let buyLink;
+  while (!(buyLink = await findBuyLink())) {
+    if (Date.now() > deadline) throw new Error('หาปุ่ม "ซื้อ" ในจอไม่เจอ');
+    await page.mouse.wheel(0, 600);
+    await page.waitForTimeout(300);
+  }
+  await buyLink.click();
+  await page.waitForURL((url) => url.pathname.startsWith(buyPath), { timeout: 30000 });
+  console.log('✅ กดจากหน้าแรกจนถึงหน้าเลือกรุ่นแล้ว');
+}
+
 async function runCheckout(instance = 1) {
   console.log(`🚀 เปิดเบราว์เซอร์ ${instance} เพื่อทำรายการ...`);
   // browser: "chromium" (ใช้ Chrome ในเครื่องผ่าน browserChannel) หรือ "webkit" (engine เดียวกับ Safari)
@@ -501,7 +557,12 @@ async function runCheckout(instance = 1) {
     await page.waitForTimeout(1000 + Math.random() * 1000);
 
     checkoutStep = 'เปิดหน้าสินค้า';
-    await page.goto(settings.productUrl, { waitUntil: 'domcontentloaded' });
+    try {
+      await clickThroughToProduct(page, (step) => { checkoutStep = step; });
+    } catch (err) {
+      console.warn(`⚠️  กดเข้าหน้าสินค้าจากหน้าแรกไม่สำเร็จ: ${err.message} — เปิด ${settings.productUrl} ตรงแทน`);
+      await page.goto(settings.productUrl, { waitUntil: 'domcontentloaded' });
+    }
     await assertNotBlocked(page, 'เปิดหน้าสินค้า');
     await pause(page);
 

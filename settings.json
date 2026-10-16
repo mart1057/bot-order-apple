@@ -38,6 +38,7 @@
       "priceTHB": 79900,
       "partNumber": "MK2D4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-duo",
+      "landingPath": "/th/iphone-duo/",
       "options": {
         "dimensionColor": "starwhite",
         "dimensionCapacity": "256gb"
@@ -49,6 +50,7 @@
       "priceTHB": 79900,
       "partNumber": "MK2E4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-duo",
+      "landingPath": "/th/iphone-duo/",
       "options": {
         "dimensionColor": "nightsky",
         "dimensionCapacity": "256gb"
@@ -60,6 +62,7 @@
       "priceTHB": 87900,
       "partNumber": "MK2F4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-duo",
+      "landingPath": "/th/iphone-duo/",
       "options": {
         "dimensionColor": "starwhite",
         "dimensionCapacity": "512gb"
@@ -71,6 +74,7 @@
       "priceTHB": 87900,
       "partNumber": "MK2G4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-duo",
+      "landingPath": "/th/iphone-duo/",
       "options": {
         "dimensionColor": "nightsky",
         "dimensionCapacity": "512gb"
@@ -82,6 +86,7 @@
       "priceTHB": 103900,
       "partNumber": "MK2H4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-duo",
+      "landingPath": "/th/iphone-duo/",
       "options": {
         "dimensionColor": "starwhite",
         "dimensionCapacity": "1tb"
@@ -93,6 +98,7 @@
       "priceTHB": 103900,
       "partNumber": "MK2J4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-duo",
+      "landingPath": "/th/iphone-duo/",
       "options": {
         "dimensionColor": "nightsky",
         "dimensionCapacity": "1tb"
@@ -104,6 +110,7 @@
       "priceTHB": 127900,
       "partNumber": "MK2K4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-duo",
+      "landingPath": "/th/iphone-duo/",
       "options": {
         "dimensionColor": "starwhite",
         "dimensionCapacity": "2tb"
@@ -115,6 +122,7 @@
       "priceTHB": 127900,
       "partNumber": "MK2L4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-duo",
+      "landingPath": "/th/iphone-duo/",
       "options": {
         "dimensionColor": "nightsky",
         "dimensionCapacity": "2tb"
@@ -126,6 +134,7 @@
       "priceTHB": 52900,
       "partNumber": "MJXN4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "black",
@@ -138,6 +147,7 @@
       "priceTHB": 52900,
       "partNumber": "MJXP4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "silver",
@@ -150,6 +160,7 @@
       "priceTHB": 52900,
       "partNumber": "MJXQ4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "burgundy",
@@ -162,6 +173,7 @@
       "priceTHB": 52900,
       "partNumber": "MJXR4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "glacier",
@@ -174,6 +186,7 @@
       "priceTHB": 60900,
       "partNumber": "MJXT4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "black",
@@ -186,6 +199,7 @@
       "priceTHB": 60900,
       "partNumber": "MJXU4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "silver",
@@ -198,6 +212,7 @@
       "priceTHB": 60900,
       "partNumber": "MJXV4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "burgundy",
@@ -210,6 +225,7 @@
       "priceTHB": 60900,
       "partNumber": "MJXW4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "glacier",
@@ -222,6 +238,7 @@
       "priceTHB": 76900,
       "partNumber": "MJXX4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "black",
@@ -234,6 +251,7 @@
       "priceTHB": 76900,
       "partNumber": "MJXY4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "silver",
@@ -246,6 +264,7 @@
       "priceTHB": 76900,
       "partNumber": "MJY04ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "burgundy",
@@ -258,6 +277,7 @@
       "priceTHB": 76900,
       "partNumber": "MJY14ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "glacier",
@@ -270,6 +290,7 @@
       "priceTHB": 100900,
       "partNumber": "MJY24ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "black",
@@ -282,6 +303,7 @@
       "priceTHB": 100900,
       "partNumber": "MJY34ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "silver",
@@ -294,6 +316,7 @@
       "priceTHB": 100900,
       "partNumber": "MJY44ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "burgundy",
@@ -306,6 +329,7 @@
       "priceTHB": 100900,
       "partNumber": "MJY54ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_9inch",
         "dimensionColor": "glacier",
@@ -318,6 +342,7 @@
       "priceTHB": 48900,
       "partNumber": "MJRP4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "black",
@@ -330,6 +355,7 @@
       "priceTHB": 48900,
       "partNumber": "MJRQ4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "silver",
@@ -342,6 +368,7 @@
       "priceTHB": 48900,
       "partNumber": "MJRR4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "burgundy",
@@ -354,6 +381,7 @@
       "priceTHB": 48900,
       "partNumber": "MJRT4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "glacier",
@@ -366,6 +394,7 @@
       "priceTHB": 56900,
       "partNumber": "MJRU4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "black",
@@ -378,6 +407,7 @@
       "priceTHB": 56900,
       "partNumber": "MJRV4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "silver",
@@ -390,6 +420,7 @@
       "priceTHB": 56900,
       "partNumber": "MJRW4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "burgundy",
@@ -402,6 +433,7 @@
       "priceTHB": 56900,
       "partNumber": "MJRX4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "glacier",
@@ -414,6 +446,7 @@
       "priceTHB": 72900,
       "partNumber": "MJRY4ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "black",
@@ -426,6 +459,7 @@
       "priceTHB": 72900,
       "partNumber": "MJT04ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "silver",
@@ -438,6 +472,7 @@
       "priceTHB": 72900,
       "partNumber": "MJT14ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "burgundy",
@@ -450,6 +485,7 @@
       "priceTHB": 72900,
       "partNumber": "MJT24ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "glacier",
@@ -462,6 +498,7 @@
       "priceTHB": 96900,
       "partNumber": "MJT34ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "black",
@@ -474,6 +511,7 @@
       "priceTHB": 96900,
       "partNumber": "MJT44ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "silver",
@@ -486,6 +524,7 @@
       "priceTHB": 96900,
       "partNumber": "MJT54ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "burgundy",
@@ -498,6 +537,7 @@
       "priceTHB": 96900,
       "partNumber": "MJT64ZP/A",
       "productUrl": "https://www.apple.com/th/shop/buy-iphone/iphone-18-pro",
+      "landingPath": "/th/iphone-18-pro/",
       "options": {
         "dimensionScreensize": "6_3inch",
         "dimensionColor": "glacier",
