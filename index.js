@@ -298,7 +298,18 @@ async function waitBagChange(page, before) {
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
-const MAX_PER_ORDER = 2; // Apple จำกัด iPhone ไม่เกิน 2 เครื่องต่อคำสั่งซื้อ
+const MAX_PER_ORDER = settings.quantity || 1;
+
+// อ่านเฉพาะข้อความจำกัดการซื้อ ไม่ใช้ตัวเลขจากราคา/รายละเอียดสินค้า
+function parseBagPurchaseLimit(text) {
+  const matches = [...text.matchAll(/(?:ลูกค้าสามารถซื้อ|คุณสามารถซื้อ)[^\n]*?ได้สูงสุด\s*(\d+)\s*(?:ชิ้น|เครื่อง)/g)];
+  const limits = matches.map((match) => Number(match[1])).filter((n) => Number.isSafeInteger(n) && n > 0);
+  return limits.length ? Math.min(...limits) : null;
+}
+
+async function readBagPurchaseLimit(page) {
+  return parseBagPurchaseLimit(await page.locator('body').innerText());
+}
 
 // แสดงช่องจำนวนและปุ่มในหน้าถุง เพื่อใช้แก้ selector
 async function dumpBag(page) {
@@ -318,8 +329,9 @@ async function dumpBag(page) {
 }
 
 async function setBagQuantity(page, requested) {
-  const quantity = Math.min(requested, MAX_PER_ORDER);
-  if (quantity !== requested) console.warn(`⚠️  Apple จำกัด ${MAX_PER_ORDER} เครื่อง ใช้ ${quantity} แทน ${requested}`);
+  let quantity = Math.min(requested, MAX_PER_ORDER);
+  if (!Number.isSafeInteger(quantity) || quantity < 1) throw new Error('quantity ต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป');
+  if (quantity !== requested) console.warn(`⚠️  จำกัดตาม settings.quantity ที่ ${MAX_PER_ORDER} เครื่อง ใช้ ${quantity} แทน ${requested}`);
   const qtySelects = page.locator(QTY_SELECTOR).locator('visible=true');
   if (!(await qtySelects.first().waitFor({ timeout: 20000 }).then(() => true, () => false))) {
     await dumpBag(page);
@@ -328,9 +340,21 @@ async function setBagQuantity(page, requested) {
 
   // ลบทีละบรรทัดจนเหลือตามจำนวน ไม่ว่าในถุงจะค้างไว้กี่เครื่อง
   for (let attempt = 0; attempt < 30; attempt++) {
+    const limit = await readBagPurchaseLimit(page);
+    if (limit !== null && limit < quantity) {
+      console.warn(`⚠️  ตั้งไว้ ${requested} เครื่อง แต่ Apple แจ้งสูงสุด ${limit} เครื่อง ปรับเหลือ ${limit}`);
+      quantity = limit;
+    }
     const total = await bagTotal(page);
     console.log(`🧺 ในถุงมีทั้งหมด ${total} เครื่อง (${await qtySelects.count()} บรรทัด) ต้องการ ${quantity}`);
     if (total === quantity) {
+      // ให้คำเตือนจากการอัปเดตครั้งก่อนหายก่อน ไม่กดชำระเงินทั้งที่ยังมีข้อจำกัด
+      const deadline = Date.now() + 5000;
+      while (await readBagPurchaseLimit(page) !== null) {
+        if (Date.now() >= deadline) throw new Error('จำนวนตรงแล้วแต่ Apple ยังแสดงคำเตือนจำกัดการซื้อ กรุณาตรวจถุงด้วยตนเอง');
+        await page.waitForTimeout(200);
+      }
+      if (await bagTotal(page) !== quantity) continue;
       console.log(`✅ จำนวนในถุง: ${quantity} เครื่อง`);
       return;
     }
@@ -351,7 +375,7 @@ async function setBagQuantity(page, requested) {
       // ขาด: เพิ่มจำนวนที่บรรทัดแรก (Apple จะแยกเป็นบรรทัดใหม่ให้เอง)
       const first = qtySelects.first();
       const want = String((parseInt(await first.inputValue(), 10) || 0) + (quantity - total));
-      const options = await first.evaluate((el) => [...el.options].map((o) => o.value));
+      const options = await first.evaluate((el) => [...el.options].filter((o) => !o.disabled && !o.parentElement.disabled).map((o) => o.value));
       if (!options.includes(want)) throw new Error(`เลือกจำนวน ${want} ไม่ได้ (Apple ให้เลือกได้: ${options.join(', ')})`);
       await first.selectOption(want);
     }
@@ -554,7 +578,7 @@ async function runCheckout(instance = 1) {
     await page.goto('https://www.apple.com/th/', { waitUntil: 'domcontentloaded' });
     await page.bringToFront();
     await assertNotBlocked(page, 'เปิดหน้า Apple หลัก');
-    await page.waitForTimeout(1000 + Math.random() * 1000);
+    await page.waitForTimeout(2000 + Math.random() * 1000);
 
     checkoutStep = 'เปิดหน้าสินค้า';
     try {
