@@ -1,4 +1,6 @@
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const dotenv = require('dotenv');
 const { execFile } = require('child_process');
 const playwright = require('playwright');
 const config = require('./settings.json');
@@ -18,6 +20,20 @@ const settings = { ...shared, partNumber: product.partNumber, productUrl: produc
 console.log(`🛒 สินค้าที่เลือก: ${product.name || selectedProduct} (${settings.partNumber})`);
 
 const REQUIRED_ENV = ['FIRST_NAME', 'LAST_NAME', 'EMAIL', 'PHONE'];
+
+// แต่ละเบราว์เซอร์ใช้ env ของตัวเอง: settings.envFiles (ค่าเริ่มต้น .env.1, .env.2)
+// ถ้าไม่มีไฟล์เหล่านี้เลย จะ fallback เป็น .env ไฟล์เดียว (1 เบราว์เซอร์)
+function loadEnvProfiles() {
+  const wanted = config.envFiles || ['.env.1', '.env.2'];
+  let files = wanted.filter((f) => fs.existsSync(path.join(__dirname, f)));
+  if (!files.length) files = ['.env'];
+  return files.map((file) => {
+    const env = dotenv.parse(fs.readFileSync(path.join(__dirname, file)));
+    const missing = REQUIRED_ENV.filter((k) => !env[k]);
+    if (missing.length) throw new Error(`${file}: ยังไม่ได้ตั้งค่า ${missing.join(', ')} (ดูตัวอย่างใน .env.example)`);
+    return { file, env };
+  });
+}
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const now = () => new Date().toLocaleTimeString('th-TH');
 
@@ -287,15 +303,20 @@ async function bagTotal(page) {
 
 // รอจนจำนวนรวมเปลี่ยนจากค่าเดิม (Apple อัปเดตถุงแล้ว render ใหม่)
 async function waitBagChange(page, before) {
-  await page.waitForFunction(({ sel, before }) => {
-    const total = [...document.querySelectorAll(sel)]
-      .filter((e) => e.offsetWidth || e.offsetHeight)
-      .reduce((sum, e) => sum + (parseInt(e.value, 10) || 0), 0);
-    return total !== before;
-  }, { sel: QTY_SELECTOR, before }, { timeout: 15000 }).catch(() => {
-    throw new Error('ถุงไม่อัปเดตหลังแก้จำนวน');
-  });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+  const deadline = Date.now() + 15000;
+  let lastTotal = before;
+  let stableSince = Date.now();
+  while (Date.now() < deadline) {
+    const total = await bagTotal(page);
+    if (total !== lastTotal) {
+      lastTotal = total;
+      stableSince = Date.now();
+    }
+    if (total !== before && total > 0 && Date.now() - stableSince >= 1500) return;
+    await page.waitForTimeout(200);
+  }
+  throw new Error(`ถุงไม่ยืนยันจำนวนใหม่หลังแก้จำนวน (ตอนนี้ ${await bagTotal(page)} เครื่อง)`);
 }
 
 const MAX_PER_ORDER = settings.quantity || 1;
@@ -328,8 +349,8 @@ async function dumpBag(page) {
   console.table(info.removeButtons);
 }
 
-async function setBagQuantity(page, requested) {
-  let quantity = Math.min(requested, MAX_PER_ORDER);
+async function setBagQuantity(page, requested, instance = 1) {
+  const quantity = Math.min(requested, MAX_PER_ORDER);
   if (!Number.isSafeInteger(quantity) || quantity < 1) throw new Error('quantity ต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป');
   if (quantity !== requested) console.warn(`⚠️  จำกัดตาม settings.quantity ที่ ${MAX_PER_ORDER} เครื่อง ใช้ ${quantity} แทน ${requested}`);
   const qtySelects = page.locator(QTY_SELECTOR).locator('visible=true');
@@ -342,8 +363,7 @@ async function setBagQuantity(page, requested) {
   for (let attempt = 0; attempt < 30; attempt++) {
     const limit = await readBagPurchaseLimit(page);
     if (limit !== null && limit < quantity) {
-      console.warn(`⚠️  ตั้งไว้ ${requested} เครื่อง แต่ Apple แจ้งสูงสุด ${limit} เครื่อง ปรับเหลือ ${limit}`);
-      quantity = limit;
+      throw new Error(`เบราว์เซอร์ ${instance}: ต้องการ ${quantity} เครื่อง แต่หน้าถุงแจ้งสูงสุด ${limit} เครื่อง จึงหยุดโดยไม่ชำระเงิน`);
     }
     const total = await bagTotal(page);
     console.log(`🧺 ในถุงมีทั้งหมด ${total} เครื่อง (${await qtySelects.count()} บรรทัด) ต้องการ ${quantity}`);
@@ -355,7 +375,7 @@ async function setBagQuantity(page, requested) {
         await page.waitForTimeout(200);
       }
       if (await bagTotal(page) !== quantity) continue;
-      console.log(`✅ จำนวนในถุง: ${quantity} เครื่อง`);
+      console.log(`✅ จำนวนในถุง: ${quantity} เครื่อง — เบราว์เซอร์ ${instance}`);
       return;
     }
 
@@ -516,26 +536,47 @@ async function clickThroughToProduct(page, setStep) {
   console.log('✅ กดจากหน้าแรกจนถึงหน้าเลือกรุ่นแล้ว');
 }
 
-async function runCheckout(instance = 1) {
-  console.log(`🚀 เปิดเบราว์เซอร์ ${instance} เพื่อทำรายการ...`);
+async function runCheckout(instance = 1, env = {}, envFile = '.env', total = 1, browserType) {
+  console.log(`🚀 เปิดเบราว์เซอร์ ${instance} เพื่อทำรายการ... (env: ${envFile}, ${env.EMAIL})`);
   // browser: "chromium" (ใช้ Chrome ในเครื่องผ่าน browserChannel) หรือ "webkit" (engine เดียวกับ Safari)
-  const type = settings.browser || 'chromium';
-  const sessionDirectory = createBrowserSession(instance);
-  console.log(`🪟 เบราว์เซอร์ ${instance}: โปรไฟล์ใหม่ ${sessionDirectory}`);
-  const context = await playwright[type].launchPersistentContext(sessionDirectory, {
+  const type = browserType || settings.browser || 'chromium';
+  // incognito (ค่าเริ่มต้น): เปิด Chrome แล้วใช้ context ใหม่ = หน้าต่าง Incognito ไม่มี cookie/ประวัติ
+  // ตั้ง "incognito": false ใน settings.json เพื่อกลับไปใช้โปรไฟล์ชั่วคราวแบบเดิม
+  const incognito = settings.incognito !== false;
+  const sessionDirectory = incognito ? null : createBrowserSession(instance);
+  console.log(`🪟 เบราว์เซอร์ ${instance} (${type}${incognito ? ', incognito' : ''})${sessionDirectory ? `: โปรไฟล์ใหม่ ${sessionDirectory}` : ''}`);
+  const launchOptions = {
     headless: false,
     timeout: 30000,
     channel: type === 'chromium' ? settings.browserChannel || undefined : undefined,
     slowMo: settings.slowMoMs ?? 0,
     args: type === 'chromium' ? [
       ...(settings.stealthMode ? ['--disable-blink-features=AutomationControlled'] : []),
-      '--start-maximized',
+      // กันไม่ให้ Chrome หน่วง/หยุด render หน้าต่างที่ถูกบังหรืออยู่เบื้องหลัง
+      // (เปิดหลายหน้าต่างพร้อมกัน หน้าต่างที่โดนบังจะค้าง)
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-background-timer-throttling',
+      ...(total > 1
+        // หลายหน้าต่าง: วางเรียงข้างกัน ไม่ให้ทับกัน
+        ? [`--window-position=${(instance - 1) * (settings.windowWidth || 960)},0`, `--window-size=${settings.windowWidth || 960},${settings.windowHeight || 1000}`]
+        : ['--start-maximized']),
     ] : undefined,
+  };
+  const contextOptions = {
     locale: 'th-TH',
     viewport: null,
     // เว้นว่างเพื่อใช้ User-Agent จริงของเบราว์เซอร์ที่เปิด
     ...(settings.userAgent ? { userAgent: settings.userAgent } : {}),
-  });
+  };
+  let browser = null;
+  let context;
+  if (incognito) {
+    browser = await playwright[type].launch(launchOptions);
+    context = await browser.newContext(contextOptions);
+  } else {
+    context = await playwright[type].launchPersistentContext(sessionDirectory, { ...launchOptions, ...contextOptions });
+  }
   console.log(`✅ เชื่อมต่อเบราว์เซอร์ ${instance} แล้ว`);
   if (type === 'chromium' && settings.stealthMode) {
     await context.addInitScript(() => {
@@ -645,7 +686,7 @@ async function runCheckout(instance = 1) {
     }
     checkoutStep = 'ปรับจำนวน / checkout';
     await pause(page);
-    await setBagQuantity(page, settings.quantity || 1);
+    await setBagQuantity(page, settings.quantity || 1, instance);
     await pause(page);
     await clickFirst(page, ['[data-autom="checkout"]', '#shoppingCart\\.actions\\.navCheckout', 'button#bag-checkout-btn'], 'ชำระเงิน');
     await assertNotBlocked(page, 'กดชำระเงิน');
@@ -682,10 +723,10 @@ async function runCheckout(instance = 1) {
     if (await self.isVisible().catch(() => false)) await self.click();
     await pause(page);
 
-    await fillFirst(page, [page.getByLabel('ชื่อ', { exact: true }), ...field('firstName')], process.env.FIRST_NAME, 'ชื่อ');
-    await fillFirst(page, [page.getByLabel('นามสกุล', { exact: true }), ...field('lastName')], process.env.LAST_NAME, 'นามสกุล');
-    await fillFirst(page, [page.getByLabel('อีเมล', { exact: true }), ...field('emailAddress')], process.env.EMAIL, 'อีเมล');
-    await fillFirst(page, [page.getByLabel(/หมายเลขโทรศัพท์มือถือ/), ...field('mobilePhone'), ...field('daytimePhone')], process.env.PHONE, 'หมายเลขโทรศัพท์มือถือ');
+    await fillFirst(page, [page.getByLabel('ชื่อ', { exact: true }), ...field('firstName')], env.FIRST_NAME, 'ชื่อ');
+    await fillFirst(page, [page.getByLabel('นามสกุล', { exact: true }), ...field('lastName')], env.LAST_NAME, 'นามสกุล');
+    await fillFirst(page, [page.getByLabel('อีเมล', { exact: true }), ...field('emailAddress')], env.EMAIL, 'อีเมล');
+    await fillFirst(page, [page.getByLabel(/หมายเลขโทรศัพท์มือถือ/), ...field('mobilePhone'), ...field('daytimePhone')], env.PHONE, 'หมายเลขโทรศัพท์มือถือ');
     console.log('✅ กรอกข้อมูลผู้มารับสินค้าแล้ว');
     await pause(page);
     await clickFirst(page, ['#rs-checkout-continue-button-bottom', 'button:has-text("ดำเนินการต่อที่การชำระเงิน")'], 'ดำเนินการต่อที่การชำระเงิน');
@@ -704,25 +745,25 @@ async function runCheckout(instance = 1) {
     const fill = async (label, value, name) => {
       if (!(await fillField(page, label, value, name))) missing.push(name);
     };
-    if (process.env.CARD_NUMBER) {
-      await fill(/หมายเลขบัตรเครดิต/, process.env.CARD_NUMBER, 'หมายเลขบัตร');
-      await fill(/วันหมดอายุ/, process.env.CARD_EXP, 'วันหมดอายุ');
-      await fill(/^CVV$|รหัสความปลอดภัย/, process.env.CARD_CVV, 'CVV');
+    if (env.CARD_NUMBER) {
+      await fill(/หมายเลขบัตรเครดิต/, env.CARD_NUMBER, 'หมายเลขบัตร');
+      await fill(/วันหมดอายุ/, env.CARD_EXP, 'วันหมดอายุ');
+      await fill(/^CVV$|รหัสความปลอดภัย/, env.CARD_CVV, 'CVV');
     }
 
     // 1) ช่องข้อความของที่อยู่สำหรับเรียกเก็บเงินก่อน
-    await fill(/^ชื่อ$/, process.env.FIRST_NAME, 'ชื่อ');
-    await fill(/^นามสกุล$/, process.env.LAST_NAME, 'นามสกุล');
-    await fill(/หมายเลขหรือชื่ออาคาร/, process.env.STREET_ADDRESS, 'หมายเลขหรือชื่ออาคาร, ชื่อถนน');
-    await fill(/ชื่อถนน, ซอย, หมู่/, process.env.BILLING_STREET, 'ชื่อถนน, ซอย, หมู่');
-    if (process.env.BILLING_ADDRESS_EXTRA) await fill(/ข้อมูลที่อยู่เพิ่มเติม/, process.env.BILLING_ADDRESS_EXTRA, 'ข้อมูลที่อยู่เพิ่มเติม');
-    await fill(/^รหัสไปรษณีย์$/, process.env.POSTAL_CODE, 'รหัสไปรษณีย์');
+    await fill(/^ชื่อ$/, env.FIRST_NAME, 'ชื่อ');
+    await fill(/^นามสกุล$/, env.LAST_NAME, 'นามสกุล');
+    await fill(/หมายเลขหรือชื่ออาคาร/, env.STREET_ADDRESS, 'หมายเลขหรือชื่ออาคาร, ชื่อถนน');
+    await fill(/ชื่อถนน, ซอย, หมู่/, env.BILLING_STREET, 'ชื่อถนน, ซอย, หมู่');
+    if (env.BILLING_ADDRESS_EXTRA) await fill(/ข้อมูลที่อยู่เพิ่มเติม/, env.BILLING_ADDRESS_EXTRA, 'ข้อมูลที่อยู่เพิ่มเติม');
+    await fill(/^รหัสไปรษณีย์$/, env.POSTAL_CODE, 'รหัสไปรษณีย์');
     await pause(page);
 
     // 2) dropdown ที่อยู่ทีหลัง: จังหวัด → เขต/อำเภอ → แขวง/ตำบล ตามลำดับ (ตัวถัดไปจะโหลดหลังเลือกตัวก่อน)
-    await selectByLabel(page, /จังหวัด/, process.env.BILLING_PROVINCE);
-    await selectByLabel(page, /เขต\s*\/\s*อำเภอ/, process.env.BILLING_DISTRICT);
-    await selectByLabel(page, /แขวง\s*\/\s*ตำบล/, process.env.BILLING_SUBDISTRICT);
+    await selectByLabel(page, /จังหวัด/, env.BILLING_PROVINCE);
+    await selectByLabel(page, /เขต\s*\/\s*อำเภอ/, env.BILLING_DISTRICT);
+    await selectByLabel(page, /แขวง\s*\/\s*ตำบล/, env.BILLING_SUBDISTRICT);
     await pause(page);
 
     // 3) สุดท้ายก่อนกดตรวจทาน: บัตรเครดิตบางใบจะมี dropdown "เลือกจำนวนเดือนที่จะผ่อนชำระ" ขึ้นหลังกรอกเลขบัตร: เลือกตัวเลือกแรกเสมอ
@@ -785,10 +826,12 @@ async function runCheckout(instance = 1) {
 }
 
 async function runCheckouts() {
-  const count = 1;
-  console.log(`🪟 เริ่มบอต ${count} หน้าต่าง แยกเซสชันกัน`);
-  await Promise.all(Array.from({ length: count }, (_, index) =>
-    runCheckout(index + 1).catch((err) => {
+  const profiles = loadEnvProfiles();
+  console.log(`🪟 เริ่มบอต ${profiles.length} หน้าต่าง แยกเซสชันกัน: ${profiles.map((p) => p.file).join(', ')}`);
+  // settings.browsers เช่น ["chromium", "chromium"]; ไม่ตั้ง = ใช้ settings.browser ทุกหน้าต่าง
+  const types = settings.browsers || [settings.browser || 'chromium'];
+  await Promise.all(profiles.map(({ file, env }, index) =>
+    runCheckout(index + 1, env, file, profiles.length, types[index % types.length]).catch((err) => {
       console.error(`❌ เบราว์เซอร์ ${index + 1}: ${err.message}`);
       process.exitCode = 1;
     }),
@@ -796,9 +839,11 @@ async function runCheckouts() {
 }
 
 async function main() {
-  const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
-  if (missing.length) {
-    console.error(`❌ ยังไม่ได้ตั้งค่าใน .env: ${missing.join(', ')} (ดูตัวอย่างใน .env.example)`);
+  try {
+    const profiles = loadEnvProfiles();
+    console.log(`🧾 env ที่จะใช้: ${profiles.map((p) => `${p.file} (${p.env.EMAIL})`).join(', ')}`);
+  } catch (err) {
+    console.error(`❌ ${err.message}`);
     process.exit(1);
   }
 

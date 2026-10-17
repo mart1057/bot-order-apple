@@ -1,3 +1,6 @@
 # Local browser profiles, cookies, and caches
 /.apple-browser*/
 /.apple-preview*/
+
+# env แยกต่อเบราว์เซอร์
+/.env.[0-9]*
