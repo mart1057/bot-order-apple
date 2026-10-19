@@ -30,7 +30,7 @@
       "iphone-18-pro-max-2tb-glacier"
     ]
   },
-  "selectedProduct": "iphone-18-pro-max-256gb-burgundy",
+  "selectedProduct": "iphone-duo-256gb-starwhite",
   "products": {
     "iphone-duo-256gb-starwhite": {
       "name": "iPhone Duo 256GB Star White",
@@ -546,7 +546,7 @@
     }
   },
   "envFiles": [".env.1", ".env.2"],
-  "quantity": 2,
+  "quantity": 1,
   "autoPlaceOrder": true,
   "location": "10330",
   "pickupPostalCode": "11000",

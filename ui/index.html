@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="th">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Apple Bot • เลือกสินค้า</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f5f7;color:#1d1d1f;font:16px system-ui,sans-serif}main{max-width:1080px;margin:56px auto;padding:0 24px}.eyebrow{font-size:12px;letter-spacing:3px;color:#6e6e73}h1{font-size:40px;letter-spacing:-1.5px;margin:12px 0}p{color:#6e6e73;line-height:1.7}.layout{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px}.panel{background:white;border:1px solid #e5e5e7;border-radius:24px;padding:28px}label{display:block;font-size:14px;margin:20px 0 8px}select,input{width:100%;border:1px solid #d2d2d7;border-radius:12px;padding:12px;background:white;font:inherit;color:inherit}.summary{padding:20px 0;margin-top:10px;border-top:1px solid #eee}.price{font-size:26px;font-weight:600;margin-top:8px}.actions{display:flex;gap:10px}button{border:0;border-radius:12px;padding:14px 20px;font:inherit;cursor:pointer;background:#0071e3;color:white}button.secondary{background:#f0f0f2;color:#333}button:disabled{opacity:.45;cursor:default}h2{font-size:19px;margin-top:0}.badge{display:inline-block;padding:6px 12px;background:#f0f0f2;border-radius:30px;font-size:13px;margin-bottom:16px}.badge.live{color:#16713e;background:#e5f5eb}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#15171c;color:#d7e0ec;padding:18px;border-radius:14px;height:390px;overflow:auto;font:12px/1.8 ui-monospace,monospace;margin:0}.note{font-size:13px}#error{color:#b42318;min-height:24px}#active{font-size:13px;margin:0 0 12px}button:focus-visible,select:focus-visible{outline:3px solid #80baff;outline-offset:3px}@media(max-width:760px){main{margin:28px auto}.layout{grid-template-columns:1fr}h1{font-size:32px}.panel{padding:22px}}
+</style>
+<main>
+<div class="eyebrow">APPLE BOT / LOCAL CONTROL</div>
+<h1>เลือกรุ่น แล้วให้บอตทำงาน</h1>
+<p>เลือกรุ่น สี และความจุสำหรับรอบนี้ การตั้งค่าใน settings.json ยังคงเดิม</p>
+<div class="layout">
+<section class="panel"><h2>สินค้าที่ต้องการ</h2>
+<label for="model">รุ่น</label><select id="model"></select>
+<label for="capacity">ความจุ</label><select id="capacity"></select>
+<label for="color">สี</label><select id="color"></select>
+<label for="quantity">จำนวนต่อเบราว์เซอร์ (เครื่อง)</label><input id="quantity" type="number" min="1" step="1" value="1" required>
+<div class="summary"><strong id="name">กำลังโหลดสินค้า…</strong><div id="price" class="price"></div></div>
+<div class="actions"><button id="start" disabled>เริ่มเฝ้าสต็อกและซื้อ</button><button id="stop" class="secondary" disabled>หยุดบอต</button></div>
+<p id="behavior" class="note"></p><div id="error" role="alert"></div>
+<p class="note">ใช้โปรไฟล์ .env และจำนวนหน้าต่างตามการตั้งค่าบอต<br>หยุดบอตจะยุติงานอัตโนมัติ แต่ไม่ยกเลิกคำสั่งซื้อที่ส่งไปแล้ว</p>
+</section>
+<section class="panel"><h2>การทำงานของบอต</h2><div id="status" class="badge" role="status">กำลังเชื่อมต่อ</div><p id="active"></p><pre id="logs" aria-label="บันทึกการทำงาน">ยังไม่มีการทำงาน</pre><p class="note">ปิดแท็บนี้แล้วบอตยังทำงาน ตราบใดที่ npm run ui ยังเปิดอยู่</p></section>
+</div></main>
+<script>
+const $=id=>document.getElementById(id);
+let products=[], selected, busy=false, online=false, pending=false, compatible=false;
+const names={'iphone-duo':'iPhone Duo','iphone-18-pro':'iPhone 18 Pro','iphone-18-pro-max':'iPhone 18 Pro Max'};
+async function api(url,body){const res=await fetch(url,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await res.json();if(!res.ok)throw Error(data.error||'ทำรายการไม่สำเร็จ');return data}
+function options(id,values,chosen){$(id).replaceChildren(...values.map(([value,text])=>new Option(text,value)));if(values.some(v=>v[0]===chosen))$(id).value=chosen}
+function updateColors(chosen){const list=products.filter(p=>p.model===$('model').value&&p.capacity===$('capacity').value);options('color',list.map(p=>[p.key,p.color]),chosen);updateSelected()}
+function updateCapacity(chosen,productKey){const list=products.filter(p=>p.model===$('model').value);options('capacity',[...new Set(list.map(p=>p.capacity))].map(c=>[c,c.toUpperCase()]),chosen);updateColors(productKey)}
+function updateSelected(){selected=products.find(p=>p.key===$('color').value);$('name').textContent=selected?.name||'ไม่พบสินค้า';$('price').textContent=selected?.price?new Intl.NumberFormat('th-TH',{style:'currency',currency:'THB',maximumFractionDigits:0}).format(selected.price):'';buttons()}
+function buttons(){$('start').disabled=!selected||busy||!online||pending||!compatible;$('stop').disabled=!busy||!online||pending;for(const id of ['model','capacity','color','quantity'])$(id).disabled=busy||pending||!compatible}
+$('model').onchange=()=>updateCapacity();$('capacity').onchange=()=>updateColors();$('color').onchange=updateSelected;
+async function action(url,body){pending=true;buttons();$('error').textContent='';try{await api(url,body);await poll()}catch(e){$('error').textContent=e.message}finally{pending=false;buttons()}}
+$('start').onclick=()=>{const quantity=Number($('quantity').value);if(!Number.isSafeInteger(quantity)||quantity<1){$('error').textContent='จำนวนต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป';return}action('/api/start',{productKey:selected.key,quantity})};$('stop').onclick=()=>action('/api/stop',{});
+async function poll(){try{const state=await api('/api/status');online=true;busy=state.running;$('status').textContent=state.stopping?'กำลังหยุด…':busy?'บอตกำลังทำงาน':'พร้อมเริ่มงาน';$('status').classList.toggle('live',busy);$('active').textContent=state.productKey?(products.find(p=>p.key===state.productKey)?.name||state.productKey)+` · ${state.quantity} เครื่องต่อเบราว์เซอร์`:'';const box=$('logs'),atBottom=box.scrollTop+box.clientHeight>=box.scrollHeight-40;box.textContent=state.logs.join('').replace(/\x1b\[[0-9;]*m/g,'').replace(/\x07/g,'')||'ยังไม่มีการทำงาน';if(atBottom)box.scrollTop=box.scrollHeight}catch(e){online=false;$('status').textContent='เชื่อมต่อไม่ได้ — ตรวจว่า npm run ui ยังเปิดอยู่'}buttons()}
+(async()=>{try{const data=await api('/api/products');compatible=data.apiVersion===2;if(!compatible){$('error').textContent='UI server เป็นรุ่นเก่า: กด Ctrl+C ใน terminal แล้วรัน npm run ui ใหม่ ก่อนรีเฟรชหน้านี้'}products=data.products;$('quantity').value=Number.isSafeInteger(data.quantity)&&data.quantity>=1?data.quantity:1;const initial=products.find(p=>p.key===data.selectedProduct)||products[0];options('model',[...new Set(products.map(p=>p.model))].map(m=>[m,names[m]||m]),initial?.model);updateCapacity(initial?.capacity,initial?.key);$('behavior').textContent=data.autoPlaceOrder?'เมื่อมีสต็อก บอตจะดำเนินการซื้อและกดส่งคำสั่งซื้อตามการตั้งค่าปัจจุบัน':'เมื่อมีสต็อก บอตจะดำเนินการถึงหน้าตรวจทาน แล้วให้คุณกดส่งคำสั่งซื้อเอง';await poll();setInterval(poll,1000)}catch(e){$('error').textContent=e.message}})();
+</script>
+</html>

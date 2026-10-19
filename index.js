@@ -22,7 +22,17 @@ if (!product.partNumber) {
 }
 const { products, selectedProduct, ...shared } = config;
 const settings = { ...shared, partNumber: product.partNumber, productUrl: product.productUrl, landingPath: product.landingPath, options: product.options || {} };
+const quantityArgIndex = process.argv.indexOf('--quantity');
+if (quantityArgIndex !== -1) {
+  const value = process.argv[quantityArgIndex + 1];
+  const quantity = Number(value);
+  if (!/^\d+$/.test(value || '') || !Number.isSafeInteger(quantity) || quantity < 1) {
+    throw new Error('--quantity ต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป');
+  }
+  settings.quantity = quantity;
+}
 console.log(`🛒 สินค้าที่เลือก: ${product.name || productKey} (${settings.partNumber})`);
+console.log(`🧺 จำนวนต่อเบราว์เซอร์: ${settings.quantity || 1} เครื่อง`);
 
 const REQUIRED_ENV = ['FIRST_NAME', 'LAST_NAME', 'EMAIL', 'PHONE'];
 

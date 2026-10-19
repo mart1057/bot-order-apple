@@ -48,7 +48,8 @@
     "pro-bk-2tb": "node index.js --product iphone-18-pro-2tb-black",
     "pro-sl-2tb": "node index.js --product iphone-18-pro-2tb-silver",
     "pro-bg-2tb": "node index.js --product iphone-18-pro-2tb-burgundy",
-    "pro-gl-2tb": "node index.js --product iphone-18-pro-2tb-glacier"
+    "pro-gl-2tb": "node index.js --product iphone-18-pro-2tb-glacier",
+    "ui": "node ui-server.js"
   },
   "keywords": [],
   "author": "",
