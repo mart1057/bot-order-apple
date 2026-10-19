@@ -55,7 +55,8 @@
     "ui:logs": "pm2 logs apple-bot-ui",
     "ui:status": "pm2 status apple-bot-ui",
     "ui:delete": "pm2 delete apple-bot-ui",
-    "ui:dev": "node ui-server.js"
+    "ui:dev": "node ui-server.js",
+    "test": "node --test test/*.test.js"
   },
   "keywords": [],
   "author": "",

@@ -1,6 +1,6 @@
 # bot-order-apple
 
-ชีทคำสั่งครบทุกสีและความจุ: [COMMANDS.md](COMMANDS.md) · รันเบื้องหลังด้วย pm2: [PM2.md](PM2.md)
+ชีทคำสั่งครบทุกสีและความจุ: [COMMANDS.md](COMMANDS.md) · รันเบื้องหลังด้วย pm2: [PM2.md](PM2.md) · สั่งผ่าน Telegram: [TELEGRAM.md](TELEGRAM.md)
 
 ## เลือกสินค้าผ่าน UI
 

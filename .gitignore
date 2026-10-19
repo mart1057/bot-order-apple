@@ -4,3 +4,6 @@
 
 # env แยกต่อเบราว์เซอร์
 /.env.[0-9]*
+
+# Telegram token
+/.env.telegram
