@@ -7,17 +7,22 @@ const config = require('./settings.json');
 const createBrowserSession = require('./browser-session');
 const diagnoseBag = process.argv.includes('--diagnose-bag');
 
-// เลือกสินค้าจาก settings.products ตาม settings.selectedProduct
-const product = config.products?.[config.selectedProduct];
+// --product เลือกสินค้าเฉพาะรอบนี้ โดยไม่แก้ settings.json
+const productArgIndex = process.argv.indexOf('--product');
+if (productArgIndex !== -1 && (!process.argv[productArgIndex + 1] || process.argv[productArgIndex + 1].startsWith('--'))) {
+  throw new Error('กรุณาระบุรหัสสินค้าหลัง --product');
+}
+const productKey = productArgIndex === -1 ? config.selectedProduct : process.argv[productArgIndex + 1];
+const product = Object.hasOwn(config.products || {}, productKey) ? config.products[productKey] : undefined;
 if (!product) {
-  throw new Error(`ไม่พบสินค้า "${config.selectedProduct}" ใน settings.json (ที่มี: ${Object.keys(config.products || {}).join(', ')})`);
+  throw new Error(`ไม่พบสินค้า "${productKey}" ใน settings.json (ที่มี: ${Object.keys(config.products || {}).join(', ')})`);
 }
 if (!product.partNumber) {
-  throw new Error(`สินค้า "${config.selectedProduct}" ยังไม่มี partNumber ใน settings.json กรุณาเติมก่อนรัน`);
+  throw new Error(`สินค้า "${productKey}" ยังไม่มี partNumber ใน settings.json กรุณาเติมก่อนรัน`);
 }
 const { products, selectedProduct, ...shared } = config;
 const settings = { ...shared, partNumber: product.partNumber, productUrl: product.productUrl, landingPath: product.landingPath, options: product.options || {} };
-console.log(`🛒 สินค้าที่เลือก: ${product.name || selectedProduct} (${settings.partNumber})`);
+console.log(`🛒 สินค้าที่เลือก: ${product.name || productKey} (${settings.partNumber})`);
 
 const REQUIRED_ENV = ['FIRST_NAME', 'LAST_NAME', 'EMAIL', 'PHONE'];
 
