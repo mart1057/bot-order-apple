@@ -49,7 +49,13 @@
     "pro-sl-2tb": "node index.js --product iphone-18-pro-2tb-silver",
     "pro-bg-2tb": "node index.js --product iphone-18-pro-2tb-burgundy",
     "pro-gl-2tb": "node index.js --product iphone-18-pro-2tb-glacier",
-    "ui": "node ui-server.js"
+    "ui": "pm2 start ecosystem.config.js --update-env",
+    "ui:stop": "pm2 stop apple-bot-ui",
+    "ui:restart": "pm2 restart apple-bot-ui --update-env",
+    "ui:logs": "pm2 logs apple-bot-ui",
+    "ui:status": "pm2 status apple-bot-ui",
+    "ui:delete": "pm2 delete apple-bot-ui",
+    "ui:dev": "node ui-server.js"
   },
   "keywords": [],
   "author": "",
@@ -58,5 +64,8 @@
   "dependencies": {
     "dotenv": "^18.0.5",
     "playwright": "^1.63.0"
+  },
+  "devDependencies": {
+    "pm2": "^7.0.4"
   }
 }

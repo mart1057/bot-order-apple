@@ -70,7 +70,7 @@ function createUI({ launch = spawn, readConfig = () => JSON.parse(fs.readFileSyn
 
 if (require.main === module) {
   const { server, stop } = createUI();
-  const port = Number(process.env.UI_PORT || 3210);
+  const port = Number(process.env.UI_PORT || 3310);
   server.on('error', (err) => { console.error(`เปิด UI ไม่สำเร็จ: ${err.message}`); process.exitCode = 1; });
   server.listen(port, '127.0.0.1', () => console.log(`เปิดหน้า UI ที่ http://127.0.0.1:${server.address().port}`));
   const shutdown = () => { stop(); server.close(); };
