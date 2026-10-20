@@ -56,6 +56,7 @@ function createTelegramBot({ token, chatId, ui, fetchImpl = fetch, dir = __dirna
     const out = new Map();
     for (const [key, p] of list) {
       const m = modelOf(key);
+      if (m === 'iphone-18-pro') continue;
       if (!out.has(m)) out.set(m, { name: p.name.split(/ \d+(?:GB|TB)/)[0], items: [] });
       out.get(m).items.push([key, p]);
     }
@@ -167,7 +168,6 @@ function createTelegramBot({ token, chatId, ui, fetchImpl = fetch, dir = __dirna
     if (type === 'home') view = menuModels();
     else if (type === 'm') view = menuProducts(a);
     else if (type === 'p') view = menuQuantity(a);
-    else if (type === 'q') view = menuConfirm(a, Number(b));
     else if (type === 'x') return edit(msg, '❌ ยกเลิกแล้ว');
     else if (type === 's') {
       if (!ui.getState().running) return edit(msg, `${esc(msg.text || '')}\n\n⏹ บอตไม่ได้ทำงานอยู่แล้ว`);
@@ -175,7 +175,7 @@ function createTelegramBot({ token, chatId, ui, fetchImpl = fetch, dir = __dirna
       return edit(msg, `${esc(msg.text || '')}\n\n⏹ ส่งสัญญาณหยุดบอตแล้ว`);
     }
     else if (type === 'l') return send(logText(), ui.getState().running ? stopMarkup : {});
-    else if (type === 'c') {
+    else if (type === 'q' || type === 'c') {
       const err = doStart(a, Number(b));
       if (err) return edit(msg, err);
       return edit(msg, `${menuConfirm(a, Number(b)).text.split('\n').slice(1, 3).join('\n')}\n\n▶️ เริ่มแล้ว — กดปุ่มด้านล่างเพื่อหยุดได้ทุกเมื่อ`, STOP_KEYBOARD);

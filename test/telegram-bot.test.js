@@ -4,12 +4,13 @@ const { EventEmitter } = require('node:events');
 const path = require('node:path');
 const { createTelegramBot } = require('../telegram-bot');
 
-test('telegram: list → model → product → qty → confirm starts the bot; rejects other chats', async () => {
+test('telegram: selecting quantity starts the bot immediately; rejects other chats', async () => {
   const config = {
     quantity: 1, autoPlaceOrder: true, envFiles: ['.env'],
     products: {
       'iphone-duo-256gb-starwhite': { name: 'iPhone Duo 256GB Star White', colorTH: 'สตาร์ไวท์', partNumber: 'P1', priceTHB: 79900, options: { dimensionCapacity: '256gb' } },
       'iphone-18-pro-256gb-black': { name: 'iPhone 18 Pro 256GB Black', colorTH: 'ดำ', partNumber: 'P2', options: { dimensionCapacity: '256gb' } },
+      'iphone-18-pro-max-256gb-black': { name: 'iPhone 18 Pro Max 256GB Black', colorTH: 'ดำ', partNumber: 'P3', options: { dimensionCapacity: '256gb' } },
     },
   };
   const started = [];
@@ -26,15 +27,18 @@ test('telegram: list → model → product → qty → confirm starts the bot; r
 
   await bot.handleUpdate(msg('/list'));
   assert.match(last('sendMessage').text, /duo-wh-256/);
-  assert.deepEqual(last('sendMessage').reply_markup.inline_keyboard.map((r) => r[0].callback_data), ['m:iphone-duo', 'm:iphone-18-pro']);
+  assert.deepEqual(last('sendMessage').reply_markup.inline_keyboard.map((r) => r[0].callback_data), ['m:iphone-duo', 'm:iphone-18-pro-max']);
+  assert.doesNotMatch(last('sendMessage').text, /iPhone 18 Pro<\/b>/);
+
+  await bot.handleUpdate(tap('m:iphone-18-pro'));
+  assert.match(last('editMessageText').text, /ไม่พบรุ่นนี้/);
 
   await bot.handleUpdate(tap('m:iphone-duo'));
   assert.equal(last('editMessageText').reply_markup.inline_keyboard[0][0].callback_data, 'p:iphone-duo-256gb-starwhite');
   await bot.handleUpdate(tap('p:iphone-duo-256gb-starwhite'));
+  assert.equal(started.length, 0, 'ต้องยังไม่เริ่มก่อนเลือกจำนวน');
   await bot.handleUpdate(tap('q:iphone-duo-256gb-starwhite:2'));
-  assert.match(last('editMessageText').text, /autoPlaceOrder/);
-  assert.equal(started.length, 0, 'ต้องยังไม่เริ่มก่อนกดยืนยัน');
-  await bot.handleUpdate(tap('c:iphone-duo-256gb-starwhite:2'));
+  assert.match(last('editMessageText').text, /เริ่มแล้ว/);
   assert.deepEqual(started, [['iphone-duo-256gb-starwhite', 2]]);
   assert.equal(last('editMessageText').reply_markup.inline_keyboard[0][0].callback_data, 's', 'ต้องมีปุ่มหยุดหลังเริ่ม');
   await bot.handleUpdate(msg('/status'));
